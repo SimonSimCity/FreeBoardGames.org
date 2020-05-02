@@ -12,27 +12,19 @@ export interface IG {
   activeCard: number,
 }
 
-function TakeCard(G : IG, ctx: Ctx, playerId: number) {
-}
-
-function ChooseToDrawCard(G : IG, ctx: Ctx, playerId: number) {
-}
-
-function DrawnCard(G : IG, ctx: Ctx, playerId: number) {
-  G.activeCard
-}
-
-function ChooseToFlipCard(G : IG, ctx: Ctx, playerId: number) {
-}
-
-function SwapCard(G : IG, ctx: Ctx, playerId: number, cardId: number) {
+function SwapCard(G: IG, ctx: Ctx, playerId: number, cardId: number) {
   const card = G.activeCard;
   G.activeCard = G.cards[playerId][cardId].value;
   G.cards[playerId][cardId].value = card;
   G.cards[playerId][cardId].flipped = true;
 }
 
-function FlipCard(G : IG, ctx: Ctx, playerId: number, cardId: number) {
+function DiscardCard(G: IG) {
+  G.discardedCards.push(G.activeCard);
+  G.activeCard = null;
+}
+
+function FlipCard(G: IG, ctx: Ctx, playerId: number, cardId: number) {
   G.cards[playerId][cardId].flipped = true;
 }
 
@@ -69,36 +61,58 @@ export const MyjoGame = {
   phases: {
     start: {
       start: true,
-      moves: { FlipCard },
-      // endIf: (G : IG) => G.cards.every(playerCards => playerCards.filter(card => card.flipped).length >= 2),
+      moves: {
+        FlipCardStart: (G: IG, ctx: Ctx, playerId: number, cardId: number) => {
+          if (G.cards[playerId].filter(card => card.flipped).length < 2) {
+            FlipCard(G, ctx, playerId, cardId);
+          }
+        },
+      },
+      endIf: (G : IG) => G.cards.every(playerCards => playerCards.filter(card => card.flipped).length >= 2),
       next: null,
     },
   },
 
   turn: {
+    onBegin: (G: IG, ctx: Ctx) => { if (ctx.phase === null) { ctx.events.setStage('takeOrDraw'); } },
+
     stages: {
-      pickOrDraw: {
-        moves: { TakeCard, ChooseToDrawCard },
+      takeOrDraw: {
+        moves: {
+          ChooseDiscardedCard: (G: IG, ctx: Ctx) => {
+            G.activeCard = G.discardedCards.pop();
+            ctx.events.setStage('swapCard');
+          },
+          DrawCard: (G: IG, ctx: Ctx) => {
+            G.activeCard = G.deck.pop();
+            ctx.events.setStage('takeOrFlip');
+          },
+        },
       },
 
-      drawOrFlip: {
-        moves: { DrawnCard, ChooseToFlipCard },
+      takeOrFlip: {
+        moves: {
+          TakeDrawnCard: (G: IG, ctx: Ctx) => {
+            ctx.events.setStage('swapCard');
+          },
+          GoToFlipCard: (G: IG, ctx: Ctx) => {
+            DiscardCard(G);
+            ctx.events.setStage('flipCard');
+          },
+        },
       },
 
       swapCard: {
-        moves: { SwapCard },
-      },
-
-      flip: {
-        moves: { FlipCard },
-      },
-
-      play: {
         moves: {
-          plusone(G: IG) {
-            // return { count: G.count + 1 };
+          SwapCard: (G: IG, ctx: Ctx, playerId: number, cardId: number) => {
+            SwapCard(G, ctx, playerId, cardId);
+            DiscardCard(G);
           },
         },
+      },
+
+      flipCard: {
+        moves: { FlipCard },
       },
     },
   },
