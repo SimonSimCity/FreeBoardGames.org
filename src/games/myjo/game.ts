@@ -1,25 +1,39 @@
 import { Ctx } from 'boardgame.io';
 
+export interface PlayerCard {
+  value: number,
+  flipped: boolean,
+}
+
 export interface IG {
-  count: number;
+  cards: Array<Array<PlayerCard>>,
+  deck: Array<number>,
+  discardedCards: Array<number>,
+  activeCard: number,
 }
 
-function TakeCard(G : Object, ctx: Ctx) {
+function TakeCard(G : IG, ctx: Ctx, playerId: number) {
 }
 
-function ChooseToDrawCard(G : Object, ctx: Ctx) {
+function ChooseToDrawCard(G : IG, ctx: Ctx, playerId: number) {
 }
 
-function DrawnCard(G : Object, ctx: Ctx) {
+function DrawnCard(G : IG, ctx: Ctx, playerId: number) {
+  G.activeCard
 }
 
-function ChooseToFlipCard(G : Object, ctx: Ctx) {
+function ChooseToFlipCard(G : IG, ctx: Ctx, playerId: number) {
 }
 
-function ChooseCardToSwap(G : Object, ctx: Ctx) {
+function SwapCard(G : IG, ctx: Ctx, playerId: number, cardId: number) {
+  const card = G.activeCard;
+  G.activeCard = G.cards[playerId][cardId].value;
+  G.cards[playerId][cardId].value = card;
+  G.cards[playerId][cardId].flipped = true;
 }
 
-function ChooseCardToFlip(G : Object, ctx: Ctx) {
+function FlipCard(G : IG, ctx: Ctx, playerId: number, cardId: number) {
+  G.cards[playerId][cardId].flipped = true;
 }
 
 export const MyjoGame = {
@@ -45,33 +59,45 @@ export const MyjoGame = {
     ]);
 
     return {
-      cards: Array(ctx.numPlayers).map(() => Array(12).map(() => deck.pop())),
+      cards: Array(ctx.numPlayers).fill('').map(() => Array(12).fill('').map(() => ({ value: deck.pop(), flipped: false }))),
       deck,
+      discardedCards: [deck.pop()],
+      activeCard: null,
     };
   },
 
   phases: {
-    pickOrDraw: {
-      moves: { TakeCard, ChooseToDrawCard },
+    start: {
       start: true,
+      moves: { FlipCard },
+      // endIf: (G : IG) => G.cards.every(playerCards => playerCards.filter(card => card.flipped).length >= 2),
+      next: null,
     },
+  },
 
-    drawOrFlip: {
-      moves: { DrawnCard, ChooseToFlipCard },
-    },
+  turn: {
+    stages: {
+      pickOrDraw: {
+        moves: { TakeCard, ChooseToDrawCard },
+      },
 
-    swapCard: {
-      moves: { ChooseCardToSwap },
-    },
+      drawOrFlip: {
+        moves: { DrawnCard, ChooseToFlipCard },
+      },
 
-    flip: {
-      moves: { ChooseCardToFlip },
-    },
+      swapCard: {
+        moves: { SwapCard },
+      },
 
-    play: {
-      moves: {
-        plusone(G: IG) {
-          return { count: G.count + 1 };
+      flip: {
+        moves: { FlipCard },
+      },
+
+      play: {
+        moves: {
+          plusone(G: IG) {
+            // return { count: G.count + 1 };
+          },
         },
       },
     },

@@ -14,11 +14,17 @@ interface IBoardProps {
 
 export class Board extends React.Component<IBoardProps, {}> {
   render() {
+    const players = this.props.playerID ? [this.props.gameArgs.players.find(p => `${p.playerID}` === this.props.playerID)] : this.props.gameArgs.players;
+
     return (
       <GameLayout
         gameArgs={this.props.gameArgs}> 
-        <h2>Hello world!</h2>
-        <pre>{JSON.stringify(this.props.gameArgs, null, 2)}</pre>
+        {players.map((player) => (
+          <div key={player.playerID}>
+            <h2>Hello {player.playerID}!</h2>
+            <pre>{JSON.stringify(this.props.gameArgs, null, 2)}</pre>
+          </div>
+        ))}
       </GameLayout>
     );
   }
