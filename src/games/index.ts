@@ -12,6 +12,7 @@ import { fourinarowGameDef } from './fourinarow';
 import { rotaGameDef } from './rota';
 import { secretcodesGameDef } from './secretcodes';
 import { hangmanGameDef } from './hangman';
+import { myjoGameDef } from './myjo';
 
 // Add new games here
 export const GAMES_MAP: IGameDefMap = {
@@ -28,11 +29,13 @@ export const GAMES_MAP: IGameDefMap = {
   rota: rotaGameDef,
   secretcodes: secretcodesGameDef,
   hangman: hangmanGameDef,
+  myjo: myjoGameDef,
 };
 
 // Order roughly by popularity.
 // See https://stats.freeboardgames.org
 export const GAMES_LIST: IGameDef[] = [
+  GAMES_MAP.myjo,
   GAMES_MAP.takesix,
   GAMES_MAP.chess,
   GAMES_MAP.secretcodes,
